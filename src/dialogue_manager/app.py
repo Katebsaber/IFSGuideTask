@@ -55,12 +55,15 @@ def create_dialogue_memory(messages: list) -> str:
     # MESSAGE_IDS: {A, B, C}
     # IN_RSPNS_TO: {-, A, B}
     # MESSAGE_IDS - IN_RSPNS_TO = {C}
-        
+    
+    response = {}
+
     messages = pd.DataFrame([x.__dict__ for x in messages])
     messages.drop(["_sa_instance_state"], axis=1, inplace=True)
     msg_ids = set(messages["id"])
     in_response_to_ids = set(messages["in_response_to"])
     last_msg_id = list(msg_ids - in_response_to_ids)[0]
+    response["last_message_id"] = last_msg_id
 
     # Create the dialogue history
     ordered_messages = []
@@ -74,7 +77,9 @@ def create_dialogue_memory(messages: list) -> str:
     ordered_messages = list(reversed(ordered_messages))
     
     dialogue_memory = " \n ".join(ordered_messages)
-    return dialogue_memory.strip()
+    response["memory"] = dialogue_memory.strip()
+
+    return response
 
 
 @app.post("/api/v1/dialogue")
@@ -86,18 +91,19 @@ async def dialogue(
         user_info = requests.get(AUTH_URL, headers={"Authorization": auth})
         if user_info.status_code != 200:
             raise HTTPException(user_info.status_code)
-        print(user_info.content)
+        # print(user_info.content)
         user_info = json.loads(user_info.content)
         # Message can not be empty since in our design a dialogue is only happening after the first message
         if message is None or message == "":
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, detail="Message is empty"
             )
+        message_id = str(uuid4())
+
         # Check if this is a new dialogue
         if dialogue_id is None:
             # a new dialogue
             dialogue_id = str(uuid4())
-            message_id = str(uuid4())
 
             # create augmented message = prompt + message
             message = f"{INITIAL_PROMPT} \n\n HUMAN : {message}"
@@ -145,7 +151,40 @@ async def dialogue(
             if len(msgs) == 0:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dialogue not found or user is not permitted to read")
 
-            dialogue_memory = create_dialogue_memory(msgs)
+            # create the dialogue memory
+            memory = create_dialogue_memory(msgs)
+            last_message_id = memory["last_message_id"]
+            dialogue_memory = memory["memory"]
+            dialogue_memory += f" \n HUMAN : {message}"
+
+            # create a new message object with memory
+            msg = SchemaMessage(
+                id=message_id,
+                user_id=user_info["id"],
+                dialogue_id=dialogue_id,
+                created_at=datetime.now(timezone.utc),
+                content=message,
+                message_type=SchemaMessageType.human,
+                in_response_to=last_message_id,
+            )
+            
+            # generate a response based on the augmented message
+            reply_content = fake_reply(message=dialogue_memory)
+
+            # create a new message object for ai reply
+            rply = SchemaMessage(
+                id=str(uuid4()),
+                user_id=user_info["id"],
+                dialogue_id=dialogue_id,
+                created_at=reply_content.created_at,
+                content=reply_content.content,
+                message_type=reply_content.message_type,
+                in_response_to=message_id,
+            )
+
+            # store messages
+            create_message(db=db, message=msg)
+            create_message(db=db, message=rply)
 
             return({"messages":msgs,"memory":dialogue_memory})
     except HTTPException as e:

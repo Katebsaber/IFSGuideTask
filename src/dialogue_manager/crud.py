@@ -50,7 +50,6 @@ def get_dialogue_messages(
 
 
 def create_message(db: Session, message: SchemaMessage):
-    print(message.user_id)
     db_message = DBMessage(
         id=message.id,
         user_id=message.user_id,

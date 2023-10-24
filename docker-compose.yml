@@ -1,0 +1,48 @@
+version: '3.9'
+
+services:
+  postgres:
+    container_name: ifs-pg
+    image: postgres:15.4-bullseye
+    restart: always
+    ports:
+      - 5432:5432
+    volumes:
+      - pg:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+  pgadmin:
+    container_name: ifs-pgadmin
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+    ports:
+      - "5050:80"
+  auth:
+    container_name: ifs-auth
+    image: redis:7.2.2-alpine
+    restart: always
+    ports:
+      - '6379:6379'
+    command: redis-server --save 20 1 --loglevel warning --requirepass ${AUTH_REDIS_PASSWORD}
+    volumes: 
+      - auth:/data
+  cache:
+    container_name: ifs-cache
+    image: redis:7.2.2-alpine
+    restart: always
+    ports:
+      - '6378:6379'
+    command: redis-server --save 20 1 --loglevel warning --requirepass ${CACHE_REDIS_PASSWORD}
+    volumes: 
+      - cache:/data
+
+volumes:
+  pg:
+    driver: local
+  cache:
+    driver: local
+  auth:
+    driver: local

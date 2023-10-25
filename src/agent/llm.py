@@ -12,7 +12,7 @@ async def llama(request: Request, prompt:str):
     stream = llm(
         f"""{prompt}""",
         max_tokens=100,
-        stop=["\n", "\n\n", " Q:", "human:"],
+        stop=["\n", "\n\n", " Q:", "HUMAN:"],
         stream=False,
     )
     if len(stream["choices"]) > 0: 

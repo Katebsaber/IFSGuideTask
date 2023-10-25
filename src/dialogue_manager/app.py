@@ -192,7 +192,7 @@ async def dialogue(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Unknown error occured",
+            detail=f"Unknown error occured: {e}",
         )
 
 
@@ -208,4 +208,3 @@ async def dialogue(
 
 if __name__ == "__main__":
     uvicorn.run("app:app", host="0.0.0.0", port=8081, log_level="info", reload=True)
-    # print(fake_reply("hello"))

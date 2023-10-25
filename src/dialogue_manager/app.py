@@ -215,9 +215,30 @@ async def get_dialogues(skip:int = 0, limit:int=10, auth: str = Header(None), db
             detail=f"Unknown error occured: {e}",
         )   
 
-# @app.get("/api/v1/messages")
-# async def get_messages(chat_id: str = None):
-#     pass
+@app.get("/api/v1/{dialogue_id}/messages")
+async def get_messages(dialogue_id: str = None,skip:int = 0, limit:int=10, auth: str = Header(None), db: Session = Depends(get_db)):
+    try:
+        # Simple User Info Checker
+        user_info = requests.get(AUTH_URL, headers={"Authorization": auth})
+        if user_info.status_code != 200:
+            raise HTTPException(user_info.status_code)
+
+        user_info = json.loads(user_info.content)
+
+        return get_dialogue_messages(
+            db=db,
+            dialogue_id=dialogue_id,
+            user_id=user_info["id"],
+            skip=skip,
+            limit=limit,
+        )
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Unknown error occured: {e}",
+        )  
 
 
 if __name__ == "__main__":

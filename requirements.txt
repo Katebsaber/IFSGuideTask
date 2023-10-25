@@ -10,3 +10,4 @@ requests
 SQLAlchemy
 psycopg2
 pandas
+llama-cpp-python

@@ -1,5 +1,5 @@
 from llama_cpp import Llama
-from config import MODEL_PATH
+from config import MODEL_PATH, MAX_TOKENS
 from fastapi import FastAPI, Request
 
 # Load the model
@@ -11,7 +11,7 @@ app = FastAPI()
 async def llama(request: Request, prompt:str):
     stream = llm(
         f"""{prompt}""",
-        max_tokens=100,
+        max_tokens=MAX_TOKENS,
         stop=["\n", "\n\n", " Q:", "HUMAN:"],
         stream=False,
     )

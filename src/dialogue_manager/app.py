@@ -239,7 +239,3 @@ async def get_messages(dialogue_id: str = None,skip:int = 0, limit:int=10, auth:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Unknown error occured: {e}",
         )  
-
-
-if __name__ == "__main__":
-    uvicorn.run("app:app", host="0.0.0.0", port=8081, log_level="info", reload=True)

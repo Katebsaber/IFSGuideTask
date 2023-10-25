@@ -3,7 +3,7 @@ import requests
 import pandas as pd
 import ujson as json
 from uuid import uuid4
-from config import INITIAL_PROMPT, AUTH_URL
+from config import INITIAL_PROMPT, AUTH_URL, AGENT_URL
 from fastapi import FastAPI, status, HTTPException, Header, Depends
 from sqlalchemy.orm import Session
 from crud import (
@@ -33,10 +33,13 @@ def get_db():
 app = FastAPI()
 
 
-def fake_reply(message: str) -> SchemaAgentMessage:
+def get_agent_reply(message: str) -> SchemaAgentMessage:
+    bot_role = "\n CHATBOT : "
+    response = requests.get(AGENT_URL, params={"prompt": f"{message} {bot_role}"})
+    
     return SchemaAgentMessage(
         created_at=datetime.now(tz=timezone.utc),
-        content="Fake Response",
+        content=response.content,
         message_type=SchemaMessageType.ai,
     )
 
@@ -120,7 +123,7 @@ async def dialogue(
             )
 
             # generate a response based on the augmented message
-            reply_content = fake_reply(message=message)
+            reply_content = get_agent_reply(message=message)
 
             # create a new message object for ai reply
             rply = SchemaMessage(
@@ -138,8 +141,8 @@ async def dialogue(
             create_message(db=db, message=rply)
 
             return {
-                "human":msg,
-                "ai": rply
+                "memory":msg.content,
+                "reply": rply
             }
         else:
             # continuation on a previous dialogue
@@ -169,7 +172,7 @@ async def dialogue(
             )
             
             # generate a response based on the augmented message
-            reply_content = fake_reply(message=dialogue_memory)
+            reply_content = get_agent_reply(message=dialogue_memory)
 
             # create a new message object for ai reply
             rply = SchemaMessage(
@@ -186,7 +189,7 @@ async def dialogue(
             create_message(db=db, message=msg)
             create_message(db=db, message=rply)
 
-            return({"messages":msgs,"memory":dialogue_memory})
+            return({"memory":dialogue_memory, "reply":rply})
     except HTTPException as e:
         raise e
     except Exception as e:

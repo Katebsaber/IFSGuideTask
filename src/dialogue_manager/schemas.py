@@ -4,7 +4,7 @@ from pydantic import BaseModel, AwareDatetime
 
 class SchemaMessageType(str, Enum):
     human = "HUMAN"
-    ai = "AI"
+    ai = "CHATBOT"
 
 class SchemaMessage(BaseModel):
     id: str

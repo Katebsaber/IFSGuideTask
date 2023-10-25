@@ -11,3 +11,4 @@ SQL_ALCHEMY_DATABASE_URL = URL.create(
     port=os.getenv("PG_PORT", 5432),
     database=os.getenv("PG_DATABASE", "postgres"),
 )
+AGENT_URL = os.getenv("AGENT_URL", "http://127.0.0.1:8083/api/v1/agent")

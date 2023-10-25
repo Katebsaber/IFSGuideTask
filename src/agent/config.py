@@ -1,3 +1,4 @@
 import os
 
-MODEL_PATH = os.getenv("MODEL_PATH", "/home/max/llama-2-7b-chat.gguf.q2_K.bin")
+MODEL_PATH = os.getenv("MODEL_PATH", "/app/model.bin")
+MAX_TOKENS = int(os.getenv("MAX_TOKENS", 100))

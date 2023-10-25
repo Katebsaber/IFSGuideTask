@@ -15,10 +15,9 @@ def get_message(db: Session, message_id: str, user_id: str):
 
 def get_user_dialogue_ids(db: Session, user_id: str, skip: int = 0, limit: int = 10):
     return (
-        db.query(DBMessage)
+        db.query(DBMessage.dialogue_id)
         .filter(DBMessage.user_id == user_id)
         .distinct(DBMessage.dialogue_id)
-        .order_by(DBMessage.created_at)
         .offset(skip)
         .limit(limit)
         .all()
@@ -76,12 +75,14 @@ if __name__ == "__main__":
         message_type=SchemaMessageType.human,
         in_response_to=None
     )
-    print(msg)
-    print(msg.user_id)
+    # print(msg)
+    # print(msg.user_id)
 
     from models import Base
     from database import SessionLocal, engine
 
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
-    create_message(db=db, message=msg)
+    # create_message(db=db, message=msg)
+
+    print(get_user_dialogue_ids(db, user_id="c85f5866-852e-40d8-a4f2-2dada07c7708"))

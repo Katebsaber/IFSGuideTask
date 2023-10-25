@@ -4,6 +4,7 @@ import pandas as pd
 import ujson as json
 from uuid import uuid4
 from config import INITIAL_PROMPT, AUTH_URL, AGENT_URL
+from fastapi.responses import RedirectResponse
 from fastapi import FastAPI, status, HTTPException, Header, Depends
 from sqlalchemy.orm import Session
 from crud import (
@@ -32,6 +33,9 @@ def get_db():
 
 app = FastAPI()
 
+@app.get("/", response_class=RedirectResponse, include_in_schema=False)
+async def docs():
+    return RedirectResponse(url="/docs")
 
 def get_agent_reply(message: str) -> SchemaAgentMessage:
     bot_role = "\n CHATBOT : "
